@@ -1,0 +1,4 @@
+[Project]
+Name=riivtodolph
+Manager=KDevCMakeManager
+VersionControl=kdevgit
