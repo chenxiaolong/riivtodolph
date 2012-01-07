@@ -1,30 +1,34 @@
 #include "riivtodolph.h"
 //#include "riivxmlparse.cpp"
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <sstream>
-#include <vector>
 
-//#ifdef MINGW32
-//#include <getopt.h>
-//#define off64_t long
-//#include <direct.h>
-//#endif
+#include <QtCore/QStringList>
+#include <QtCore/QRegExp>
+#include <QtCore/QFileInfo>
+#include <QtCore/QDir>
+#include <cstdlib>
 
-/* int function return values
- * 0 : Okay, no errors
- * 1 : No value specified
- * 2 : Default value used
- * 3 : Invalid value
- * 4 : File/directory not found
- * 5 : File/directory not readable
- * 6 : File/directory not writable
- * 7 : File/directory not executable
- * 8 : Is a file (directory expected)
- * 9 : Is a directory (file expected)
- */
+/* Return values; values higher than 0 are errors */
+static const int NO_ERROR = 0;
+static const int NO_VALUE = -1;
+static const int DEFAULT_VALUE = -2;
+static const int INVALID_VALUE = -3;
+
+/* What to check */
+static const int CHK_EXIST = 32;
+static const int CHK_FILE = 16;
+static const int CHK_DIR = 8;
+static const int CHK_READ = 4;
+static const int CHK_WRITE = 2;
+static const int CHK_EXEC = 1;
+
+/* Use powers of 2 similar to Unix permissions to represent errors */
+static const int PATH_NOT_EXIST = 32;
+static const int PATH_IS_FILE = 16;
+static const int PATH_IS_DIR = 8;
+static const int PATH_NO_READ = 4;
+static const int PATH_NO_WRITE = 2;
+static const int PATH_NO_EXEC = 1;
+
 
 riivtodolph::riivtodolph() {
   bytes = 4; // Default to dword
@@ -33,41 +37,106 @@ riivtodolph::riivtodolph() {
   file_wit = "";
   dir_output = "";
   dir_config = "";
+
+#ifdef Q_WS_WIN
+  windows = true;
+#else
+  windows = false;
+#endif
 }
 
-std::string riivtodolph::getValueSize() {
+int riivtodolph::check(QString path, int checkthis) {
+  if(path == "") {
+    return NO_VALUE;
+  }
+  
+  QFileInfo temp(path);
+  int result = 0;
+  int check = checkthis;
+
+  /* Check if path exists */
+  if(check >= CHK_EXIST) {
+    check -= CHK_EXIST;
+    if(!temp.exists()) {
+      result += PATH_NOT_EXIST;
+    }
+  }
+  /* Check if path is a file */
+  if(check >= CHK_FILE) {
+    check -= CHK_FILE;
+    if(!temp.isDir()) {
+      result += PATH_IS_DIR;
+    }
+  }
+  /* Check if path is a directory */
+  if(check >= CHK_DIR) {
+    check -= CHK_DIR;
+    if(!temp.isDir()) {
+      result += PATH_IS_FILE;
+    }
+  }
+  /* Check if path is readable */
+  if(check >= CHK_READ) {
+    check -= CHK_READ;
+    if(!temp.isReadable()) {
+      result += PATH_NO_READ;
+    }
+  }
+  /* Check if path is writable */
+  if(check >= CHK_WRITE) {
+    check -= CHK_WRITE;
+    if(!temp.isWritable()) {
+      result += PATH_NO_WRITE;
+    }
+  }
+  /* Check if path is executable */
+  if(check >= CHK_EXEC) {
+    check -= CHK_EXEC;
+    if(!temp.isExecutable()) {
+      result += PATH_NO_EXEC;
+    }
+  }
+
+  return result;
+}
+
+int riivtodolph::displayErrors (int errors) {
+  // Umm...hi?
+}
+
+QString riivtodolph::getValueSize() {
   switch(bytes) {
     case 4:
-      return (char *)"dword";
+      return "dword";
     case 2:
-      return (char *)"word";
+      return "word";
     case 1:
-      return (char *)"byte";
+      return "byte";
     default:
-      return (char *)"Invalid";
+      return "Invalid";
   }
 }
 
-std::string riivtodolph::getFile_riiv() {
+QString riivtodolph::getFile_riiv() {
   return file_riiv;
 }
 
-std::string riivtodolph::getFile_iso() {
+QString riivtodolph::getFile_iso() {
   return file_iso;
 }
 
-std::string riivtodolph::getFile_wit() {
+QString riivtodolph::getFile_wit() {
   return file_wit;
 }
 
-std::string riivtodolph::getDir_output() {
+QString riivtodolph::getDir_output() {
   return dir_output;
 }
 
-int riivtodolph::setValueSize(std::string size) {
+int riivtodolph::setValueSize(QString size) {
   /* No value specified */
   if(size == "") {
-    return 2;
+    return DEFAULT_VALUE;
   }
   else if(size == "byte") {
     bytes = 1;
@@ -80,171 +149,157 @@ int riivtodolph::setValueSize(std::string size) {
   }
   /* Invalid value */
   else {
-    return 3;
+    return INVALID_VALUE;
   }
   /* Okay */
-  return 0;
+  return NO_ERROR;
 }
 
-int riivtodolph::setFile_riiv(std::string filename) {
+int riivtodolph::setFile_riiv(QString filename) {
   /* No value specified */
   if(filename == "") {
-    return 1;
+    return NO_VALUE;
   }
-  /* File not found */
-  else if(stat(filename.c_str(), &info) != 0) {
-    return 4;
+  int errors = check(filename, CHK_EXIST + CHK_FILE + CHK_READ);
+  if(errors > 0) {
+    displayErrors(errors);
+    return INVALID_VALUE;
   }
-  /* File not readable */
-  else if(access(filename.c_str(), R_OK) != 0) {
-    return 5;
-  }
-  /* Path is directory, not file */
-  else if(S_ISDIR(info.st_mode)) {
-    return 9;
-  }
+  
   /* Okay */
   file_riiv = filename;
-  return 0;
+  return NO_ERROR;
 }
 
-int riivtodolph::setFile_iso(std::string filename) {
+int riivtodolph::setFile_iso(QString filename) {
   /* No value specified */
   if(filename == "") {
-    return 1;
+    return NO_VALUE;
   }
-  /* File not found */
-  else if(stat(filename.c_str(), &info) != 0) {
-    return 4;
+  int errors = check(filename, CHK_EXIST + CHK_FILE + CHK_READ);
+  if(errors > 0) {
+    displayErrors(errors);
+    return INVALID_VALUE;
   }
-  /* File not readable */
-  else if(access(filename.c_str(), R_OK) != 0) {
-    return 5;
-  }
-  /* Path is a directory, not a file */
-  else if(S_ISDIR(info.st_mode)) {
-    return 9;
-  }
+  
   /* Okay */
   file_iso = filename;
-  return 0;
+  return NO_ERROR;
 }
 
-int riivtodolph::setDir_output(std::string directory) {
+int riivtodolph::setDir_output(QString directory) {
   /* If output directory isn't provided, set it to the current directory */
   if(directory == "") {
     /* Get current directory */
-    int size = pathconf(".", _PC_PATH_MAX);
-    char buf[size];
-    getcwd(buf, size);
-    dir_output = buf;
+    QString cwd = QDir::currentPath();
+    dir_output = cwd;
     /* Default value used */
-    return 2;
+    return DEFAULT_VALUE;
     /* CWD should already exist, so we can return now */
   }
-  /* Check if directory exists */
-  else if(stat(directory.c_str(), &info) == 0) {
-    if(!S_ISDIR(info.st_mode)) {
-      /* Path is a file, not a directory */
-      return 8;
+  
+  /* Check if provided directory exists */
+  int errors = check(directory, CHK_EXIST);
+  /* If not, then create it */
+  if(errors == PATH_NOT_EXIST) {
+    QDir newpath(directory);
+    newpath.mkdir(directory);
+  }
+  /* If it already exists, perform the other checks */
+  else {
+    errors = check(directory, CHK_DIR + CHK_READ + CHK_WRITE);
+    if(errors > 0) {
+      displayErrors(errors);
+      return INVALID_VALUE;
     }
   }
-  /* Directory does not exist */
-  else {
-    /* Create directory with 755 privileges */
-    mkdir(directory.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | // User
-                             S_IRGRP |           S_IXGRP | // Group
-                             S_IROTH |           S_IXOTH); // Other
-                           //  Read  |  Write  | Execute
-  }
-  /* Check if directory is readable */
-  if(access(directory.c_str(), R_OK) != 0) {
-    return 5;
-  }
-  /* Check if directory is writable */
-  else if(access(directory.c_str(), W_OK) != 0) {
-    return 6;
-  }
+  
   /* Okay */
   dir_output = directory;
-  return 0;
+  return NO_ERROR;
 }
 
-int riivtodolph::setDir_config(std::string directory) {
+int riivtodolph::setDir_config(QString directory) {
   /* Config directory is required if memory patches are used */
-  return 0;
+  return NO_ERROR;
 }
 
-int riivtodolph::setDir_wit(std::string directory) {  
+int riivtodolph::setDir_wit(QString directory) {
+  QString wit;
+  QString witname;
+  if(windows) {
+    witname = "wit.exe";
+  }
+  else {
+    witname = "wit";
+  }
+
   /* If the path to wit wasn't specified, search for it in PATH */
   if(directory == "") {
-    std::string path = getenv("PATH");
-    
-    bool directory = false;
-    
-    /* Split PATH and search in each of those directories */
-    std::stringstream ss(path);
-    std::string temp;
-    while(std::getline(ss, temp, ':')) {
-      std::string wit = "";
+    QString path = getenv("PATH");
+
+    /* The stupid PATH delimiter is different between Linux/Mac/Unix and Windows */
+    QRegExp delim(";|:");
+    QStringList paths = path.split(delim, QString::SkipEmptyParts);
+    bool found = false;
+
+    /* Search for wit in PATH */
+    for(int i = 0; i < paths.length(); i++) {
+      QString temp = paths[i];
+
       /* Check if directory ends in a '/' */
       if(temp.at(temp.length() - 1) == '/') {
-        wit = temp + "wit";
+        wit = temp + witname;
       }
       else {
-        wit = temp + "/wit";
+        wit = temp + "/" + witname;
       }
+
       /* Check if file exists */
-      if(stat(wit.c_str(), &info) == 0) {
-        /* Check if path is a directory */
-        if(S_ISDIR(info.st_mode)) {
-          /* Do not return if there is a directory named 'wit' as other directories could contain a useful 'wit' binary */
-          directory  = true;
-          continue;
-        }
-        /* Check if file is executable */
-        if(access(wit.c_str(), X_OK) == 0) {
-          /* Set value */
-          file_wit = wit;
-          /* Return "default value" if wit exists and is executable */
-          return 2;
-        }
-        /* Return "file not executable" if wit exists, but is not executable */
-        return 7;
+      int errors = check(wit, CHK_EXIST);
+      if(errors == 0) { // No error: found wit
+        found = true;
+        break;
       }
     }
-    if(directory) {
-      return 9;
+
+    int errors = 0;
+    if(!found) {
+      errors += PATH_NOT_EXIST;
     }
-    /* If while loop completes, then a wit binary was not found in PATH */
+    else {
+      /* Perform some checks on the wit binary */
+      errors = check(directory, CHK_FILE + CHK_EXEC);
+    }
+
+    if(errors > 0) {
+      displayErrors(errors);
+      return INVALID_VALUE;
+    }
+
+    /* Okay */
+    file_wit = wit;
+    /* Return "default value" if wit exists and is executable */
+    return DEFAULT_VALUE;
   }
   /* If directory was given */
   else {
-    std::string wit;
     /* Check if directory ends with '/' */
-    if(stat(wit.c_str(), &info) == 0) {
-      wit = directory + "wit";
+    if(directory.at(directory.length() - 1) == '/') {
+      wit = directory + witname;
     }
     else {
-      wit = directory + "/wit";
+      wit = directory + "/" + witname;
     }
-    /* Check if file exists */
-    if(stat(wit.c_str(), &info) == 0) {
-      /* Check if path is a directory */
-      if(S_ISDIR(info.st_mode)) {
-        return 9;
-      }
-      /* Check if file is executable */
-      if(access(wit.c_str(), X_OK) == 0) {
-        /* Set value */
-        file_wit = wit;
-        /* Okay */
-        return 0;
-      }
-      /* Return "file not executable" */
-      return 7;
+
+    int errors = check(wit, CHK_EXIST + CHK_FILE + CHK_EXEC);
+    if(errors > 0) {
+      displayErrors(errors);
+      return INVALID_VALUE;
     }
+
+    /* Okay */
+    file_wit = wit;
+    return NO_ERROR;
   }
-  /* At this point, the file must not exist */
-  return 4;
 }

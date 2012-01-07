@@ -1,15 +1,17 @@
+#include <QtCore/QString>
+
 #include <unistd.h>
 #include <cstdio>
 
 #include "riivtodolph.cpp"
 
 int main(int argc, char **argv) {
-  std::string valuesize; // byte, word, or dword
-  std::string fileRiiv;  // Riivolution XML file
-  std::string fileIso;   // ISO rip of Wii game
-  std::string dirOutput; // Dolphin config file and ISO image output directory
-  std::string dirConfig; // Path to Dolphin GameConfig directory
-  std::string dirWit;    // path to Wit tools
+  QString valuesize; // byte, word, or dword
+  QString fileRiiv;  // Riivolution XML file
+  QString fileIso;   // ISO rip of Wii game
+  QString dirOutput; // Dolphin config file and ISO image output directory
+  QString dirConfig; // Path to Dolphin GameConfig directory
+  QString dirWit;    // path to Wit tools
   
   int argument = 0;
 
@@ -45,13 +47,13 @@ int main(int argc, char **argv) {
   fprintf(stdout, "Set output: %i\n", parser->setDir_output(dirOutput));
   
   fprintf(stdout, "Set wit: %i\n", parser->setDir_wit(dirWit));
-  
-  fprintf(stdout, "Value: %s\n", parser->getValueSize().c_str());
+
+  fprintf(stdout, "Value: %s\n", parser->getValueSize().data());
   parser->getFile_riiv();
   fprintf(stdout, "HI!!!\n");
-  fprintf(stdout, "Riiv: %s\n", parser->getFile_riiv().c_str());
-  fprintf(stdout, "ISO: %s\n", parser->getFile_iso().c_str());
-  fprintf(stdout, "Output: %s\n", parser->getDir_output().c_str());
-  fprintf(stdout, "Config: %s\n", dirConfig.c_str());
-  fprintf(stdout, "Wit: %s\n", parser->getFile_wit().c_str());
+  fprintf(stdout, "Riiv: %s\n", parser->getFile_riiv().data());
+  fprintf(stdout, "ISO: %s\n", parser->getFile_iso().data());
+  fprintf(stdout, "Output: %s\n", parser->getDir_output().data());
+  fprintf(stdout, "Config: %s\n", dirConfig.data());
+  fprintf(stdout, "Wit: %s\n", parser->getFile_wit().data());
 }
