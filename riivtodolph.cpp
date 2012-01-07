@@ -1,190 +1,250 @@
 #include "riivtodolph.h"
-#include "riivxmlparse.cpp"
-#include <iostream>
-#include <fstream>
+//#include "riivxmlparse.cpp"
+#include <sys/stat.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/stat.h>
-#include <cstdlib>
-#include <string>
-#include <vector>
 #include <sstream>
+#include <vector>
 
-#ifdef MINGW32
-#include <getopt.h>
-#define off64_t long
-#include <direct.h>
-#endif
+//#ifdef MINGW32
+//#include <getopt.h>
+//#define off64_t long
+//#include <direct.h>
+//#endif
 
-using namespace std;
+/* int function return values
+ * 0 : Okay, no errors
+ * 1 : No value specified
+ * 2 : Default value used
+ * 3 : Invalid value
+ * 4 : File/directory not found
+ * 5 : File/directory not readable
+ * 6 : File/directory not writable
+ * 7 : File/directory not executable
+ * 8 : Is a file (directory expected)
+ * 9 : Is a directory (file expected)
+ */
 
-int main(int argc, char* argv[]) {
-  
-  char *valuesize = NULL; //byte, word, or dword
-  char *riivfilename = NULL; //Riivolution XML file
-  char *isofilename = NULL; //ISO rip of Wii game
-  char *outputdirectoryname = NULL; //Dolphin config file and ISO image output directory
-  char *witpath = NULL; //path to Wit tools
-  
-  int argument = 0;
-
-  /* Begin parsing arguments */
-  while((argument = getopt(argc, argv, "r:i:o:w:s:")) != -1) {
-    switch(argument) {
-      case 'r':
-	riivfilename = optarg;
-	break;
-      case 'i':
-	isofilename = optarg;
-	break;
-      case 'o':
-	outputdirectoryname = optarg;
-	break;
-      case 'w':
-	witpath = optarg;
-	break;
-      case 's':
-	valuesize = optarg;
-	break;
-    }
-  }
-  /* End parsing arguments */
-  
-  /* Begin checking arguments */
-  
-  //Default to dword for valuesize
-  if(valuesize == NULL) {
-    valuesize = (char*)"dword";
-  }
-  //Exit if Riivolution XML file isn't provided
-  if(riivfilename == NULL) {
-    fprintf(stderr, "No Riivolution XML file was specified\n");
-    return 1;
-  }
-  //Exit if ISO game image isn't provided
-  if(isofilename == NULL) {
-    fprintf(stderr, "No Wii game ISO image was specified\n");
-    return 1;
-  }
-  //If output directory isn't provided, set it to the current directory
-  if(outputdirectoryname == NULL) {
-    char *buf;
-    long size;
-#ifdef _PC_PATH_MAX
-    size = pathconf(".", _PC_PATH_MAX); //Allocate memory for buf with the maximum path size
-#else
-    size = 999999;
-#endif
-    if ((buf = (char *)malloc((size_t)size)) != NULL) {
-      outputdirectoryname = getcwd(buf, (size_t)size);
-    }
-  }
-  
-  struct stat check;
-  
-  //Data type can only be dword, word, or byte
-  if(!(strcasecmp(valuesize, "dword") == 0 || strcasecmp(valuesize, "word") == 0 || strcasecmp(valuesize, "byte") == 0)) {
-    fprintf(stderr, "Invalid argument for -s: %s\n", valuesize);
-    return 1;
-  }
-  
-  //Check if Riivolution XML file exists
-  if(stat(riivfilename, &check) != 0) {
-    fprintf(stderr, "The Riivolution XML file does not exist:\n  %s\n", riivfilename);
-    return 1;
-  }
-  else {
-    if(access(riivfilename, R_OK) == -1) {
-      fprintf(stderr, "The Riivolution XML file is not readable:\n  %s\n", riivfilename);
-      return 1;
-    }
-  }
-  
-  //Check if Wii ISO exists
-  if(stat(isofilename, &check) != 0) {
-    fprintf(stderr, "The Wii game ISO image does not exist:\n  %s\n", isofilename);
-    return 1;
-  }
-  else {
-    if(access(isofilename, R_OK) == -1) {
-      fprintf(stderr, "The Wii game ISO image is not readable:\n  %s\n", isofilename);
-      return 1;
-    }
-  }
-  
-  //Check is output directory exists
-  if(stat(outputdirectoryname, &check) == 0) { //If path exists
-    if(!S_ISDIR(check.st_mode)) { //Check if path is a directory
-      fprintf(stderr, "The output path chosen exists, but it is not a directory:\n  %s\n", outputdirectoryname);
-      return 1;
-    }
-  }
-  else {
-    fprintf(stderr, "The output directory does not exist. Creating it...\n  %s\n", outputdirectoryname);
-#ifdef MINGW32
-    mkdir(outputdirectoryname);
-#else
-    mkdir(outputdirectoryname, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH); //Create directory with 755 privileges (read, write, and execute)
-#endif
-  }
-  
-  //Find wit
-  string witbin;
-  if(witpath == NULL) { //If user did not specify path
-    //Check if wit exists in the system's PATH
-    string path = getenv("PATH"); //get PATH environment variable
-    stringstream tempss(path); //allow string to be treated as a stream
-    vector<string> paths; //Dynamic array to hold the paths
-    string temppath;
-    char delim = ':';
-    while(getline(tempss, temppath, delim)) {
-      paths.push_back(temppath);
-    }
-    for(int i = 0; i < paths.size(); i++) {
-      temppath = paths[i];
-      temppath.append("/wit");
-      if(access(temppath.c_str(), X_OK) == 0) { //Test access to file as well as the executable bit
-	witbin = temppath;
-	break;
-      }
-    }
-  }
-  else {
-    string temppath;
-    if(witpath[strlen(witpath) - 1] != '/') { //If the last character of the path is not a slash
-      temppath = witpath;
-      temppath.append("/wit");
-    }
-    else {
-      temppath = witpath;
-      temppath.append("wit");
-    }
-    if(access(temppath.c_str(), X_OK) == 0) { //Test access to file as well as the executable bit
-      witbin = temppath;
-    }
-    else {
-      fprintf(stderr, "wit was not found in the directory specified:\n  %s\n", witpath);
-      return 1;
-    }
-  }
-  
-  /* End checking arguments */
-  
-  /* Begin outputting summary */
-  cout << "Data type: " << valuesize << endl
-       << "Riivolution XML file: " << riivfilename << endl
-       << "ISO file: " << isofilename << endl
-       << "Output directory: " << outputdirectoryname << endl
-       << "Path to wit: " << witbin << endl;
-  /* End outputting summary */
-  
-  /* Begin Riivolution XML parsing */
-  riivxmlparse *parseThis = new riivxmlparse(*valuesize, *riivfilename, *isofilename, *outputdirectoryname, witbin);
-  parseThis->parseRiivXML();
-  /* End Riivolution XML parsing */
+riivtodolph::riivtodolph() {
+  bytes = 4; // Default to dword
+  file_riiv = "";
+  file_iso = "";
+  file_wit = "";
+  dir_output = "";
+  dir_config = "";
 }
 
-void riivtodolph::usage() {
-  cout << "Blah" << endl
-       << "Line 2 " << endl;
+std::string riivtodolph::getValueSize() {
+  switch(bytes) {
+    case 4:
+      return (char *)"dword";
+    case 2:
+      return (char *)"word";
+    case 1:
+      return (char *)"byte";
+    default:
+      return (char *)"Invalid";
+  }
+}
+
+std::string riivtodolph::getFile_riiv() {
+  return file_riiv;
+}
+
+std::string riivtodolph::getFile_iso() {
+  return file_iso;
+}
+
+std::string riivtodolph::getFile_wit() {
+  return file_wit;
+}
+
+std::string riivtodolph::getDir_output() {
+  return dir_output;
+}
+
+int riivtodolph::setValueSize(std::string size) {
+  /* No value specified */
+  if(size == "") {
+    return 2;
+  }
+  else if(size == "byte") {
+    bytes = 1;
+  }
+  else if(size == "word") {
+    bytes = 2;
+  }
+  else if(size == "dword") {
+    bytes = 4;
+  }
+  /* Invalid value */
+  else {
+    return 3;
+  }
+  /* Okay */
+  return 0;
+}
+
+int riivtodolph::setFile_riiv(std::string filename) {
+  /* No value specified */
+  if(filename == "") {
+    return 1;
+  }
+  /* File not found */
+  else if(stat(filename.c_str(), &info) != 0) {
+    return 4;
+  }
+  /* File not readable */
+  else if(access(filename.c_str(), R_OK) != 0) {
+    return 5;
+  }
+  /* Path is directory, not file */
+  else if(S_ISDIR(info.st_mode)) {
+    return 9;
+  }
+  /* Okay */
+  file_riiv = filename;
+  return 0;
+}
+
+int riivtodolph::setFile_iso(std::string filename) {
+  /* No value specified */
+  if(filename == "") {
+    return 1;
+  }
+  /* File not found */
+  else if(stat(filename.c_str(), &info) != 0) {
+    return 4;
+  }
+  /* File not readable */
+  else if(access(filename.c_str(), R_OK) != 0) {
+    return 5;
+  }
+  /* Path is a directory, not a file */
+  else if(S_ISDIR(info.st_mode)) {
+    return 9;
+  }
+  /* Okay */
+  file_iso = filename;
+  return 0;
+}
+
+int riivtodolph::setDir_output(std::string directory) {
+  /* If output directory isn't provided, set it to the current directory */
+  if(directory == "") {
+    /* Get current directory */
+    int size = pathconf(".", _PC_PATH_MAX);
+    char buf[size];
+    getcwd(buf, size);
+    dir_output = buf;
+    /* Default value used */
+    return 2;
+    /* CWD should already exist, so we can return now */
+  }
+  /* Check if directory exists */
+  else if(stat(directory.c_str(), &info) == 0) {
+    if(!S_ISDIR(info.st_mode)) {
+      /* Path is a file, not a directory */
+      return 8;
+    }
+  }
+  /* Directory does not exist */
+  else {
+    /* Create directory with 755 privileges */
+    mkdir(directory.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | // User
+                             S_IRGRP |           S_IXGRP | // Group
+                             S_IROTH |           S_IXOTH); // Other
+                           //  Read  |  Write  | Execute
+  }
+  /* Check if directory is readable */
+  if(access(directory.c_str(), R_OK) != 0) {
+    return 5;
+  }
+  /* Check if directory is writable */
+  else if(access(directory.c_str(), W_OK) != 0) {
+    return 6;
+  }
+  /* Okay */
+  dir_output = directory;
+  return 0;
+}
+
+int riivtodolph::setDir_config(std::string directory) {
+  /* Config directory is required if memory patches are used */
+  return 0;
+}
+
+int riivtodolph::setDir_wit(std::string directory) {  
+  /* If the path to wit wasn't specified, search for it in PATH */
+  if(directory == "") {
+    std::string path = getenv("PATH");
+    
+    bool directory = false;
+    
+    /* Split PATH and search in each of those directories */
+    std::stringstream ss(path);
+    std::string temp;
+    while(std::getline(ss, temp, ':')) {
+      std::string wit = "";
+      /* Check if directory ends in a '/' */
+      if(temp.at(temp.length() - 1) == '/') {
+        wit = temp + "wit";
+      }
+      else {
+        wit = temp + "/wit";
+      }
+      /* Check if file exists */
+      if(stat(wit.c_str(), &info) == 0) {
+        /* Check if path is a directory */
+        if(S_ISDIR(info.st_mode)) {
+          /* Do not return if there is a directory named 'wit' as other directories could contain a useful 'wit' binary */
+          directory  = true;
+          continue;
+        }
+        /* Check if file is executable */
+        if(access(wit.c_str(), X_OK) == 0) {
+          /* Set value */
+          file_wit = wit;
+          /* Return "default value" if wit exists and is executable */
+          return 2;
+        }
+        /* Return "file not executable" if wit exists, but is not executable */
+        return 7;
+      }
+    }
+    if(directory) {
+      return 9;
+    }
+    /* If while loop completes, then a wit binary was not found in PATH */
+  }
+  /* If directory was given */
+  else {
+    std::string wit;
+    /* Check if directory ends with '/' */
+    if(stat(wit.c_str(), &info) == 0) {
+      wit = directory + "wit";
+    }
+    else {
+      wit = directory + "/wit";
+    }
+    /* Check if file exists */
+    if(stat(wit.c_str(), &info) == 0) {
+      /* Check if path is a directory */
+      if(S_ISDIR(info.st_mode)) {
+        return 9;
+      }
+      /* Check if file is executable */
+      if(access(wit.c_str(), X_OK) == 0) {
+        /* Set value */
+        file_wit = wit;
+        /* Okay */
+        return 0;
+      }
+      /* Return "file not executable" */
+      return 7;
+    }
+  }
+  /* At this point, the file must not exist */
+  return 4;
 }
