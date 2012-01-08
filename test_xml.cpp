@@ -2,5 +2,5 @@
 
 int main(int argc, char *argv[]) {
   riivxmlparse *temp = new riivxmlparse();
-  temp->readfile("/tmp/riiv.xml");
+  temp->readfile("/tmp/brawl.xml");
 }
