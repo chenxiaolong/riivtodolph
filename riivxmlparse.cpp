@@ -11,8 +11,51 @@
 #include <iostream>
 #include <fstream>
 
-riivxmlparse::riivxmlparse() {
+const QString
+  riivxmlparse::TAG_choice      ("choice"),
+  riivxmlparse::TAG_file        ("file"),
+  riivxmlparse::TAG_folder      ("folder"),
+  riivxmlparse::TAG_id          ("id"),
+  riivxmlparse::TAG_macro       ("macro"),
+  riivxmlparse::TAG_memory      ("memory"),
+  riivxmlparse::TAG_option      ("option"),
+  riivxmlparse::TAG_options     ("options"),
+  riivxmlparse::TAG_patch       ("patch"),
+  riivxmlparse::TAG_region      ("region"),
+  riivxmlparse::TAG_savegame    ("savegame"),
+  riivxmlparse::TAG_section     ("section"),
+  riivxmlparse::TAG_wiidisc     ("wiidisc");
 
+const QString
+  riivxmlparse::ATTR_align      ("allign"),
+  riivxmlparse::ATTR_clone      ("clone"),
+  riivxmlparse::ATTR_create     ("create"),
+  riivxmlparse::ATTR_default    ("default"),
+  riivxmlparse::ATTR_developer  ("developer"),
+  riivxmlparse::ATTR_disc       ("disc"),
+  riivxmlparse::ATTR_external   ("external"),
+  riivxmlparse::ATTR_game       ("game"),
+  riivxmlparse::ATTR_id         ("id"),
+  riivxmlparse::ATTR_length     ("length"),
+  riivxmlparse::ATTR_name       ("id"),
+  riivxmlparse::ATTR_ocarina    ("ocarina"),
+  riivxmlparse::ATTR_offset     ("offset"),
+  riivxmlparse::ATTR_original   ("original"),
+  riivxmlparse::ATTR_patch      ("patch"),
+  riivxmlparse::ATTR_path       ("path"),
+  riivxmlparse::ATTR_recursive  ("recursive"),
+  riivxmlparse::ATTR_resize     ("resize"),
+  riivxmlparse::ATTR_root       ("root"),
+  riivxmlparse::ATTR_search     ("search"),
+  riivxmlparse::ATTR_type       ("type"),
+  riivxmlparse::ATTR_valuefile  ("valuefile"),
+  riivxmlparse::ATTR_value      ("value"),
+  riivxmlparse::ATTR_version    ("version");
+
+
+riivxmlparse::riivxmlparse() {
+  //(const QString)riivxmlparse::TAG_wiidisc = "wiidisc";
+  
 }
 
 bool riivxmlparse::readfile(const QString & filename) {
@@ -57,6 +100,9 @@ bool riivxmlparse::readfile(const QString & filename) {
       QDomNamedNodeMap attr = traverser.attributes();
       for(int i = 0; i < attr.length(); i++) {
         std::cout << spc.toStdString() << "| ATTRIBUTE: " << attr.item(i).nodeName().toStdString() << std::endl;
+      }
+      if(traverser.nodeName() == TAG_wiidisc) {
+        std::cout << "This is a wiidisc node" << std::endl;
       }
     }
     if(traverser.hasChildNodes() && !moveToParent) {
