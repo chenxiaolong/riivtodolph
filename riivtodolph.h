@@ -9,12 +9,12 @@ public:
   riivtodolph();
   
   /* File and directory info functions */
-  int setFile_riiv(QString);
-  int setFile_iso(QString);
-  int setDir_output(QString);
-  int setDir_config(QString);
-  int setDir_wit(QString);
-  int setValueSize(QString);
+  int setFile_riiv(const QString &);
+  int setFile_iso(const QString &);
+  int setDir_output(const QString &);
+  int setDir_config(const QString &);
+  int setDir_wit(const QString &);
+  int setValueSize(const QString &);
   QString getFile_riiv();
   QString getFile_iso();
   QString getFile_wit();
@@ -29,7 +29,7 @@ private:
   bool windows;
   
   /* File and directory info */
-  int check(QString, int);
+  int check(const QString &, int);
   int displayErrors(int);
   QString file_wit;
   QString file_riiv;

@@ -1,37 +1,14 @@
 #ifndef RIIVXMLPARSE_H
 #define RIIVXMLPARSE_H
 
-//Xerces-c XML parser
-#include <xercesc/util/OutOfMemoryException.hpp>
-#include <xercesc/dom/DOMException.hpp>
-
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/dom/DOMDocument.hpp>
-#include <xercesc/dom/DOMDocumentType.hpp>
-#include <xercesc/dom/DOMElement.hpp>
-#include <xercesc/dom/DOMImplementation.hpp>
-#include <xercesc/dom/DOMImplementationLS.hpp>
-#include <xercesc/dom/DOMNodeIterator.hpp>
-#include <xercesc/dom/DOMNodeList.hpp>
-#include <xercesc/dom/DOMText.hpp>
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/util/XMLUni.hpp>
-
-#include <string>
-
-using namespace std;
+#include <QtXml/QDomDocument>
 
 class riivxmlparse {
 private:
-  /* Begin variables */
-  char *valuesize;
-  char *riivfilename;
-  char *isofilename;
-  char *outputdirectoryname;
-  string witbin;
   
+
   //Tags
-  XMLCh *TAG_wiidisc;
+  /*XMLCh *TAG_wiidisc;
   XMLCh *TAG_id;
   XMLCh *TAG_region;
   XMLCh *TAG_options;
@@ -43,10 +20,10 @@ private:
   XMLCh *TAG_file;
   XMLCh *TAG_folder;
   XMLCh *TAG_savegame;
-  XMLCh *TAG_memory;
+  XMLCh *TAG_memory;*/
   
   //Attributes
-  XMLCh *ATTR_version;
+  /*XMLCh *ATTR_version;
   XMLCh *ATTR_path;
   XMLCh *ATTR_game;
   XMLCh *ATTR_developer;
@@ -69,14 +46,12 @@ private:
   XMLCh *ATTR_ocarina;
   XMLCh *ATTR_align;
   XMLCh *ATTR_search;
-  XMLCh *ATTR_type;
-  
-  xercesc::XercesDOMParser *XMLParser;
-  /* End variables */
+  XMLCh *ATTR_type;*/
+
   
 public:
-  riivxmlparse(char &, char &, char &, char &, string &);
+  riivxmlparse();
   ~riivxmlparse();
-  void parseRiivXML();
+  bool readfile(const QString & filename);
 };
 #endif

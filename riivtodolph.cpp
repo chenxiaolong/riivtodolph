@@ -45,7 +45,7 @@ riivtodolph::riivtodolph() {
 #endif
 }
 
-int riivtodolph::check(QString path, int checkthis) {
+int riivtodolph::check(const QString &path, int checkthis) {
   if(path == "") {
     return NO_VALUE;
   }
@@ -64,7 +64,7 @@ int riivtodolph::check(QString path, int checkthis) {
   /* Check if path is a file */
   if(check >= CHK_FILE) {
     check -= CHK_FILE;
-    if(!temp.isDir()) {
+    if(!temp.isFile()) {
       result += PATH_IS_DIR;
     }
   }
@@ -133,7 +133,7 @@ QString riivtodolph::getDir_output() {
   return dir_output;
 }
 
-int riivtodolph::setValueSize(QString size) {
+int riivtodolph::setValueSize(const QString & size) {
   /* No value specified */
   if(size == "") {
     return DEFAULT_VALUE;
@@ -155,7 +155,7 @@ int riivtodolph::setValueSize(QString size) {
   return NO_ERROR;
 }
 
-int riivtodolph::setFile_riiv(QString filename) {
+int riivtodolph::setFile_riiv(const QString & filename) {
   /* No value specified */
   if(filename == "") {
     return NO_VALUE;
@@ -171,7 +171,7 @@ int riivtodolph::setFile_riiv(QString filename) {
   return NO_ERROR;
 }
 
-int riivtodolph::setFile_iso(QString filename) {
+int riivtodolph::setFile_iso(const QString & filename) {
   /* No value specified */
   if(filename == "") {
     return NO_VALUE;
@@ -187,7 +187,7 @@ int riivtodolph::setFile_iso(QString filename) {
   return NO_ERROR;
 }
 
-int riivtodolph::setDir_output(QString directory) {
+int riivtodolph::setDir_output(const QString & directory) {
   /* If output directory isn't provided, set it to the current directory */
   if(directory == "") {
     /* Get current directory */
@@ -219,12 +219,12 @@ int riivtodolph::setDir_output(QString directory) {
   return NO_ERROR;
 }
 
-int riivtodolph::setDir_config(QString directory) {
+int riivtodolph::setDir_config(const QString & directory) {
   /* Config directory is required if memory patches are used */
   return NO_ERROR;
 }
 
-int riivtodolph::setDir_wit(QString directory) {
+int riivtodolph::setDir_wit(const QString & directory) {
   QString wit;
   QString witname;
   if(windows) {

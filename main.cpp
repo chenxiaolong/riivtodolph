@@ -48,12 +48,10 @@ int main(int argc, char **argv) {
   
   fprintf(stdout, "Set wit: %i\n", parser->setDir_wit(dirWit));
 
-  fprintf(stdout, "Value: %s\n", parser->getValueSize().data());
-  parser->getFile_riiv();
-  fprintf(stdout, "HI!!!\n");
-  fprintf(stdout, "Riiv: %s\n", parser->getFile_riiv().data());
-  fprintf(stdout, "ISO: %s\n", parser->getFile_iso().data());
-  fprintf(stdout, "Output: %s\n", parser->getDir_output().data());
-  fprintf(stdout, "Config: %s\n", dirConfig.data());
-  fprintf(stdout, "Wit: %s\n", parser->getFile_wit().data());
+  fprintf(stdout, "Value: %s\n", parser->getValueSize().toUtf8().data());
+  fprintf(stdout, "Riiv: %s\n", parser->getFile_riiv().toUtf8().data());
+  fprintf(stdout, "ISO: %s\n", parser->getFile_iso().toUtf8().data());
+  fprintf(stdout, "Output: %s\n", parser->getDir_output().toUtf8().data());
+  fprintf(stdout, "Config: %s\n", dirConfig.toUtf8().data());
+  fprintf(stdout, "Wit: %s\n", parser->getFile_wit().toUtf8().data());
 }
