@@ -1,41 +1,34 @@
+#include <QString>
+
 #ifndef RIIVTODOLPH_H
 #define RIIVTODOLPH_H
 
-#include <sys/stat.h>
-#include <string>
-
 class riivtodolph {
 public:
-  /* Constructors */
   riivtodolph();
-  
-  /* File and directory info functions */
-  int setFile_riiv(std::string);
-  int setFile_iso(std::string);
-  int setDir_output(std::string);
-  int setDir_config(std::string);
-  int setDir_wit(std::string);
-  int setValueSize(std::string);
-  std::string getFile_riiv();
-  std::string getFile_iso();
-  std::string getFile_wit();
-  std::string getDir_output();
-  std::string getDir_config();
-  std::string getValueSize();
-  
-  /* Parsing functions */
-  
+
+  void set_dir_config(const QString &directory);
+  void set_dir_output(const QString &directory);
+  void set_file_iso(const QString &filename);
+  void set_file_riiv(const QString &filename);
+  void set_file_wit(const QString &filename);
+  void set_value_size(const QString &size);
+
+  QString get_dir_config() const;
+  QString get_dir_output() const;
+  QString get_file_iso() const;
+  QString get_file_riiv() const;
+  QString get_file_wit() const;
+  QString get_value_size() const;
+
 private:
-  /* File and directory info */
-  std::string file_wit;
-  std::string file_riiv;
-  std::string file_iso;
-  std::string dir_output;
-  std::string dir_config;
-  struct stat info;
-  
-  /* Memory patch size */
+  QString dir_config;
+  QString dir_output;
+  QString file_iso;
+  QString file_riiv;
+  QString file_wit;
+
   int bytes;
 };
 
-#endif
+#endif // RIIVTODOLPH_H
