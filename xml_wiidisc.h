@@ -1,3 +1,4 @@
+#include "xml_patch.h"
 #include "xml_section.h"
 
 #include <QList>
@@ -38,6 +39,10 @@ public:
   void add_section(xml_section *section);
   QList<xml_section *> * get_sections();
 
+  /* <patch> */
+  void add_patch(xml_patch *patch);
+  QList<xml_patch *> * get_patches();
+
 
 private:
   /*** <wiidisc> attributes ***/
@@ -73,6 +78,9 @@ private:
 
   /*** <section> ***/
   QList<xml_section *> *sections;
+
+  /*** <patch> ***/
+  QList<xml_patch *> *patches;
 };
 
 #endif // XML_WIIDISC_H

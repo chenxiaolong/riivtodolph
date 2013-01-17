@@ -18,6 +18,9 @@ xml_wiidisc::xml_wiidisc() {
 
   /* <section> */
   this->sections = new QList<xml_section *>();
+
+  /* <patch> */
+  this->patches = new QList<xml_patch *>();
 }
 
 /* <wiidisc> attributes */
@@ -102,4 +105,13 @@ void xml_wiidisc::add_section(xml_section *section) {
 
 QList<xml_section *> * xml_wiidisc::get_sections() {
   return this->sections;
+}
+
+/* <patch> */
+void xml_wiidisc::add_patch(xml_patch *patch) {
+  this->patches->append(patch);
+}
+
+QList<xml_patch *> * xml_wiidisc::get_patches() {
+  return this->patches;
 }

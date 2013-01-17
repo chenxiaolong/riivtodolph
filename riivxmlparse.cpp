@@ -53,7 +53,7 @@ bool riivxmlparse::process_attrs_wiidisc(const QDomNode &current) {
           this->xmltree->set_log(false);
         }
         else {
-          qDebug() << "<wiidisc> Unknown value '" << attrs.item(i).nodeValue() << "' for 'shiftfiles' tag";
+          qDebug() << "<wiidisc> Unknown value '" << attrs.item(i).nodeValue() << "' for 'shiftfiles' attribute";
           return false;
         }
       }
@@ -89,6 +89,14 @@ bool riivxmlparse::process_children_wiidisc(const QDomNode &current) {
       }
       else if (temp.nodeName().toLower() == "patch") {
         qDebug() << "<wiidisc> Processing <patch> tag...";
+        xml_patch *temp_patch = new xml_patch();
+        if (!process_attrs_patch(temp, temp_patch)) {
+          return false;
+        }
+        if (!process_children_patch(temp, temp_patch)) {
+          return false;
+        }
+        this->xmltree->add_patch(temp_patch);
       }
       else {
         qDebug() << "<wiidisc> Unknown tag:" << temp.nodeName();
@@ -352,6 +360,258 @@ bool riivxmlparse::process_attrs_patch_id(const QDomNode &current, xml_choice *c
       }
       else {
         qDebug() << "          <patch> Unknown attribute:" << attrs.item(i).nodeName();
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+bool riivxmlparse::process_attrs_patch(const QDomNode &current, xml_patch *patch) {
+  if (current.hasAttributes()) {
+    QDomNamedNodeMap attrs = current.attributes();
+    for (int i = 0; i < attrs.size(); i++) {
+      if (attrs.item(i).nodeName().toLower() == "id") {
+        qDebug() << "  <patch> Setting id to" << attrs.item(i).nodeValue();
+        patch->set_id(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "root") {
+        qDebug() << "  <patch> Setting root to" << attrs.item(i).nodeValue();
+        patch->set_root(attrs.item(i).nodeValue());
+      }
+      else {
+        qDebug() << "  <patch> Unknown attribute:" << attrs.item(i).nodeName();
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+bool riivxmlparse::process_children_patch(const QDomNode &current, xml_patch *patch) {
+  if (current.hasChildNodes()) {
+    QDomNode temp = current;
+    temp = temp.firstChild();
+    do {
+      if (temp.nodeName().toLower() == "file") {
+        qDebug() << "  <patch> Processing <file> tag...";
+        xml_file *temp_file = new xml_file();
+        if (!process_attrs_file(temp, temp_file)) {
+          return false;
+        }
+        patch->add_file_patch(temp_file);
+      }
+      else if (temp.nodeName().toLower() == "folder") {
+        qDebug() << "  <patch> Processing <folder> tag...";
+        xml_folder *temp_folder = new xml_folder();
+        if (!process_attrs_folder(temp, temp_folder)) {
+          return false;
+        }
+        patch->add_folder_patch(temp_folder);
+      }
+      else if (temp.nodeName().toLower() == "savegame") {
+        qDebug() << "  <patch> Processing <savegame> tag...!";
+        xml_savegame *temp_savegame = new xml_savegame();
+        if (!process_attrs_savegame(temp, temp_savegame)) {
+          return false;
+        }
+        patch->add_savegame_patch(temp_savegame);
+      }
+      else if (temp.nodeName().toLower() == "memory") {
+        qDebug() << "  <patch> Processing <memory> tag...";
+        xml_memory *temp_memory = new xml_memory();
+        if (!process_attrs_memory(temp, temp_memory)) {
+          return false;
+        }
+        patch->add_memory_patch(temp_memory);
+      }
+      else {
+        qDebug() << "  <patch> Unknown tag:" << temp.nodeName();
+        return false;
+      }
+      temp = temp.nextSibling();
+    } while (!temp.isNull());
+    return true;
+  }
+  return false;
+}
+
+bool riivxmlparse::process_attrs_file(const QDomNode &current, xml_file *file) {
+  if (current.hasAttributes()) {
+    QDomNamedNodeMap attrs = current.attributes();
+    for (int i = 0; i < attrs.size(); i++) {
+      if (attrs.item(i).nodeName().toLower() == "disc") {
+        qDebug() << "    <file> Setting disc file to" << attrs.item(i).nodeValue();
+        file->set_disc_file(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "external") {
+        qDebug() << "    <file> Setting external file to" << attrs.item(i).nodeValue();
+        file->set_external_file(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "resize") {
+        qDebug() << "    <file> Setting resize to" << attrs.item(i).nodeValue();
+        if (attrs.item(i).nodeValue().toLower() == "true") {
+          file->set_resize(true);
+        }
+        else if (attrs.item(i).nodeValue().toLower() == "false") {
+          file->set_resize(false);
+        }
+        else {
+          qDebug() << "    <file> Unknown value '" << attrs.item(i).nodeValue() << "' for 'resize' attribute";
+          return false;
+        }
+      }
+      else if (attrs.item(i).nodeName().toLower() == "create") {
+        qDebug() << "    <file> Setting create to" << attrs.item(i).nodeValue();
+        if (attrs.item(i).nodeValue().toLower() == "true") {
+          file->set_create(true);
+        }
+        else if (attrs.item(i).nodeValue().toLower() == "false") {
+          file->set_create(false);
+        }
+        else {
+          qDebug() << "    <file> Unknown value '" << attrs.item(i).nodeValue() << "' for 'create' attribute";
+          return false;
+        }
+      }
+      else if (attrs.item(i).nodeName().toLower() == "offset") {
+        qDebug() << "    <file> Setting offset to" << attrs.item(i).nodeValue();
+        file->set_create(attrs.item(i).nodeValue().toInt());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "length") {
+        qDebug() << "    <file> Setting length to" << attrs.item(i).nodeValue();
+        file->set_length(attrs.item(i).nodeValue().toInt());
+      }
+      else {
+        qDebug() << "    <file> Unknown attribute:" << attrs.item(i).nodeName();
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+bool riivxmlparse::process_attrs_folder(const QDomNode &current, xml_folder *folder) {
+  if (current.hasAttributes()) {
+    QDomNamedNodeMap attrs = current.attributes();
+    for (int i = 0; i < attrs.size(); i++) {
+      if (attrs.item(i).nodeName().toLower() == "disc") {
+        qDebug() << "    <folder> Setting disc folder to" << attrs.item(i).nodeValue();
+        folder->set_disc_folder(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "external") {
+        qDebug() << "    <folder> Setting external folder to" << attrs.item(i).nodeValue();
+        folder->set_external_folder(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "resize") {
+        qDebug() << "    <folder> Setting resize to" << attrs.item(i).nodeValue();
+        if (attrs.item(i).nodeValue().toLower() == "true") {
+          folder->set_resize(true);
+        }
+        else if (attrs.item(i).nodeValue().toLower() == "false") {
+          folder->set_resize(false);
+        }
+        else {
+          qDebug() << "    <folder> Unknown value '" << attrs.item(i).nodeValue() << "' for 'resize' attribute";
+          return false;
+        }
+      }
+      else if (attrs.item(i).nodeName().toLower() == "create") {
+        qDebug() << "    <folder> Setting create to" << attrs.item(i).nodeValue();
+        if (attrs.item(i).nodeValue().toLower() == "true") {
+          folder->set_create(true);
+        }
+        else if (attrs.item(i).nodeValue().toLower() == "false") {
+          folder->set_create(false);
+        }
+        else {
+          qDebug() << "    <folder> Unknown value '" << attrs.item(i).nodeValue() << "' for 'create' attribute";
+          return false;
+        }
+      }
+      else if (attrs.item(i).nodeName().toLower() == "recursive") {
+        qDebug() << "    <folder> Setting recursive to" << attrs.item(i).nodeValue();
+        if (attrs.item(i).nodeValue().toLower() == "true") {
+          folder->set_recursive(true);
+        }
+        else if (attrs.item(i).nodeValue().toLower() == "false") {
+          folder->set_recursive(false);
+        }
+        else {
+          qDebug() << "    <folder> Unknown value '" << attrs.item(i).nodeValue() << "' for 'recursive' attribute";
+          return false;
+        }
+      }
+      else if (attrs.item(i).nodeName().toLower() == "length") {
+        qDebug() << "    <folder> Setting length to" << attrs.item(i).nodeValue();
+        folder->set_length(attrs.item(i).nodeValue().toInt());
+      }
+      else {
+        qDebug() << "    <folder> Unknown attribute:" << attrs.item(i).nodeName();
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+bool riivxmlparse::process_attrs_savegame(const QDomNode &current, xml_savegame *savegame) {
+  if (current.hasAttributes()) {
+    QDomNamedNodeMap attrs = current.attributes();
+    for (int i = 0; i < attrs.size(); i++) {
+      if (attrs.item(i).nodeName().toLower() == "external") {
+        qDebug() << "    <savegame> Setting external to" << attrs.item(i).nodeValue();
+        savegame->set_external(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "clone") {
+        qDebug() << "    <savegame> Setting clone to" << attrs.item(i).nodeValue();
+        if (attrs.item(i).nodeValue().toLower() == "true") {
+          savegame->set_clone(true);
+        }
+        else if (attrs.item(i).nodeValue().toLower() == "false") {
+          savegame->set_clone(false);
+        }
+        else {
+          qDebug() << "    <savegame> Unknown value '" << attrs.item(i).nodeValue() << "' for 'clone' attribute";
+          return false;
+        }
+      }
+      else {
+        qDebug() << "    <savegame> Unknown attribute:" << attrs.item(i).nodeName();
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+bool riivxmlparse::process_attrs_memory(const QDomNode &current, xml_memory *memory) {
+  if (current.hasAttributes()) {
+    QDomNamedNodeMap attrs = current.attributes();
+    for (int i = 0; i < attrs.size(); i++) {
+      if (attrs.item(i).nodeName().toLower() == "offset") {
+        qDebug() << "    <memory> Setting offset to" << attrs.item(i).nodeValue();
+        memory->set_offset(attrs.item(i).nodeValue().toInt(NULL, 16));
+      }
+      else if (attrs.item(i).nodeName().toLower() == "value") {
+        qDebug() << "    <memory> Setting value to" << attrs.item(i).nodeValue();
+        memory->set_value(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "valuefile") {
+        qDebug() << "    <memory> Setting valuefile to" << attrs.item(i).nodeValue();
+        memory->set_valuefile(attrs.item(i).nodeValue());
+      }
+      else if (attrs.item(i).nodeName().toLower() == "original") {
+        qDebug() << "    <memory> Setting original to" << attrs.item(i).nodeValue();
+        memory->set_original(attrs.item(i).nodeValue());
+      }
+      else {
+        qDebug() << "    <memory> Unknown attribute:" << attrs.item(i).nodeName();
         return false;
       }
     }

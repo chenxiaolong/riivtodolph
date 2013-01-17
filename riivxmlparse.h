@@ -1,5 +1,4 @@
 #include "riivtodolph.h"
-#include "xml_section.h"
 #include "xml_wiidisc.h"
 #include <QtXml/QDomNode>
 
@@ -27,6 +26,12 @@ private:
   bool process_attrs_choice(const QDomNode &current, xml_choice *choice);
   bool process_children_choice(const QDomNode &current, xml_choice *choice);
   bool process_attrs_patch_id(const QDomNode &current, xml_choice *choice);
+  bool process_attrs_patch(const QDomNode &current, xml_patch *patch);
+  bool process_children_patch(const QDomNode &current, xml_patch *patch);
+  bool process_attrs_file(const QDomNode &current, xml_file *file);
+  bool process_attrs_folder(const QDomNode &current, xml_folder *folder);
+  bool process_attrs_savegame(const QDomNode &current, xml_savegame *savegame);
+  bool process_attrs_memory(const QDomNode &current, xml_memory *memory);
 
   riivtodolph *information;
   xml_wiidisc *xmltree;
